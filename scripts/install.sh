@@ -281,7 +281,8 @@ chmod 0600 "$ENV_FILE"
 log "Installing dependencies and building applications"
 runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api pnpm install --no-frozen-lockfile' bash "$APP_DIR" "$INSTALL_ROOT"
 runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api NODE_OPTIONS=--max-old-space-size=1536 pnpm build' bash "$APP_DIR" "$INSTALL_ROOT"
-chmod 0750 "$APP_DIR/scripts/backup.sh" "$APP_DIR/scripts/restore.sh"
+chmod 0750 "$APP_DIR/scripts/backup.sh" "$APP_DIR/scripts/restore.sh" "$APP_DIR/scripts/update.sh"
+install -m 0755 "$APP_DIR/scripts/update.sh" /usr/local/sbin/mongodb-platform-update
 
 log "Installing native services"
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-api.service" /etc/systemd/system/mongodb-platform-api.service
@@ -294,6 +295,7 @@ install -m 0644 "$APP_DIR/deploy/mongodb-platform-backup.service" /etc/systemd/s
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-backup.timer" /etc/systemd/system/mongodb-platform-backup.timer
 cat >/etc/sudoers.d/mongodb-platform <<EOF
 ${SERVICE_USER} ALL=(root) NOPASSWD: /usr/bin/systemctl start mongod, /usr/bin/systemctl stop mongod, /usr/bin/systemctl restart mongod
+${SERVICE_USER} ALL=(root) NOPASSWD: /usr/local/sbin/mongodb-platform-update
 EOF
 chmod 0440 /etc/sudoers.d/mongodb-platform
 visudo -cf /etc/sudoers.d/mongodb-platform >/dev/null

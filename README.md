@@ -90,6 +90,14 @@ sudo ufw status verbose
 docker compose version
 ```
 
+Update to the latest release from SSH:
+
+```bash
+sudo /usr/local/sbin/mongodb-platform-update
+```
+
+Administrators can also open **Settings -> Platform update** in the dashboard. The updater clones and builds a temporary release before replacing the active application, writes logs to `/var/log/mongodb-platform-update.log`, updates systemd units, restarts API/web, and completes only after both health checks pass.
+
 Application services run as the dedicated `mongodb-platform` system user. Nginx routes `/api/` to the API on loopback port `3001`, including WebSocket upgrade headers, and all other paths to Next.js on loopback port `3000`.
 
 ## Backups And Restore

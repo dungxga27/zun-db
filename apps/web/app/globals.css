@@ -88,6 +88,7 @@ body { min-width: 320px; }
 .mongo-tooltip { max-width: 480px; max-height: 300px; margin: 0; overflow: auto; white-space: pre-wrap; font-size: 11px; }
 .mongo-descriptions .ant-descriptions-item-label { width: 190px; }
 .mongo-json-editor { font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important; font-size: 13px; line-height: 1.65; tab-size: 2; }
+.update-log { min-height: 180px; max-height: 420px; margin: 0; padding: 16px; overflow: auto; border-radius: 10px; color: #cbd5e1; background: #07111f; font: 12px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 767px) {
   .workspace-loading-sider { display: none; }
   .workspace-loading-main { padding: 20px 16px; }

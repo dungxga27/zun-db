@@ -4,4 +4,5 @@ import { AuthModule } from '../auth/auth.module';
 import { Setting, SettingSchema } from './schemas/setting.schema';
 import { SettingsController } from './settings.controller';
 import { SettingsService } from './settings.service';
-@Module({ imports: [AuthModule, MongooseModule.forFeature([{ name: Setting.name, schema: SettingSchema }])], controllers: [SettingsController], providers: [SettingsService] }) export class SettingsModule {}
+import { PlatformUpdateService } from './platform-update.service';
+@Module({ imports: [AuthModule, MongooseModule.forFeature([{ name: Setting.name, schema: SettingSchema }])], controllers: [SettingsController], providers: [SettingsService, PlatformUpdateService] }) export class SettingsModule {}
