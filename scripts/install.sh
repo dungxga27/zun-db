@@ -27,7 +27,7 @@ esac
 ARCH=$(dpkg --print-architecture)
 [[ "$ARCH" == amd64 || "$ARCH" == arm64 ]] || die "unsupported architecture: $ARCH"
 
-SCRIPT_PATH="${BASH_SOURCE[0]:-}"
+SCRIPT_PATH="${BASH_SOURCE[0]-}"
 SOURCE_ROOT=""
 if [[ -n "$SCRIPT_PATH" && -f "$(dirname "$SCRIPT_PATH")/../package.json" ]]; then
   SOURCE_ROOT=$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd -P)
