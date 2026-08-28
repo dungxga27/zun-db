@@ -279,8 +279,8 @@ chown root:root "$ENV_FILE"
 chmod 0600 "$ENV_FILE"
 
 log "Installing dependencies and building applications"
-runuser -u "$SERVICE_USER" -- env NEXT_PUBLIC_API_BASE_URL=/api pnpm --dir "$APP_DIR" install --no-frozen-lockfile
-runuser -u "$SERVICE_USER" -- env NEXT_PUBLIC_API_BASE_URL=/api NODE_OPTIONS=--max-old-space-size=1536 pnpm --dir "$APP_DIR" build
+runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api pnpm install --no-frozen-lockfile' bash "$APP_DIR" "$INSTALL_ROOT"
+runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api NODE_OPTIONS=--max-old-space-size=1536 pnpm build' bash "$APP_DIR" "$INSTALL_ROOT"
 chmod 0750 "$APP_DIR/scripts/backup.sh" "$APP_DIR/scripts/restore.sh"
 
 log "Installing native services"
