@@ -71,6 +71,8 @@ MongoDB binds only to `127.0.0.1` by default, and generated project URIs therefo
 sudo env EXPOSE_MONGODB=true MONGODB_ALLOWED_CIDR=203.0.113.10/32 bash scripts/install.sh
 ```
 
+Interactive installation asks for this CIDR after selecting external exposure. Use the fixed public egress IP of the application as `/32`. Entering `0.0.0.0/0` requires explicit confirmation and is not recommended because direct MongoDB TLS is not configured by this installer.
+
 MongoDB authentication and CIDR filtering do not encrypt network traffic. The installer does **not** configure MongoDB TLS. Do not expose MongoDB across an untrusted network without separately configuring server/client TLS, or use a VPN/SSH tunnel and leave MongoDB bound to localhost. Nginx HTTPS protects the web/API connection only, not direct MongoDB connections.
 
 ## Vercel

@@ -96,6 +96,9 @@ ask_value ADMIN_EMAIL "Initial admin email: "
 ask_value ADMIN_PASSWORD "Initial admin password (hidden): " "" true
 ask_bool ENABLE_HTTPS "Enable HTTPS with Let's Encrypt? [Y/n]: " Y
 ask_bool EXPOSE_MONGODB "Expose MongoDB port 27017? [y/N]: " N
+if [[ "$EXPOSE_MONGODB" == true ]]; then
+  ask_value MONGODB_ALLOWED_CIDR "Allowed client IP/CIDR (for example 203.0.113.10/32): "
+fi
 ask_bool ENABLE_BACKUPS "Enable automatic daily backups? [Y/n]: " Y
 ask_value BACKUP_RETENTION_DAYS "Backup retention in days [14]: " 14 false
 
@@ -109,6 +112,13 @@ if [[ "$DOMAIN_IS_IP" == true && "$ENABLE_HTTPS" == true ]]; then
 fi
 if [[ "$EXPOSE_MONGODB" == true ]]; then
   [[ -n ${MONGODB_ALLOWED_CIDR:-} ]] || die "MONGODB_ALLOWED_CIDR is required when MongoDB is exposed"
+  if [[ "$MONGODB_ALLOWED_CIDR" == "0.0.0.0/0" || "$MONGODB_ALLOWED_CIDR" == "::/0" ]]; then
+    printf 'WARNING: MongoDB will be reachable from the entire Internet and MongoDB TLS is not configured.\n' >/dev/tty
+    [[ "$NONINTERACTIVE" == true ]] || {
+      confirmation=$(read_tty "Type OPEN to accept this risk: ")
+      [[ "$confirmation" == "OPEN" ]] || die "public MongoDB exposure cancelled"
+    }
+  fi
 fi
 export DEBIAN_FRONTEND=noninteractive
 log "Installing base packages"
