@@ -14,6 +14,19 @@ die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 on_error() { printf 'Installation failed at line %s. Inspect the output above.\n' "$1" >&2; }
 trap 'on_error $LINENO' ERR
 
+remove_apt_source() {
+  local needle=$1 file
+  for file in /etc/apt/sources.list.d/*; do
+    [[ -f "$file" ]] || continue
+    if grep -qF "$needle" "$file"; then
+      rm -f "$file"
+    fi
+  done
+  if [[ -f /etc/apt/sources.list ]] && grep -qF "$needle" /etc/apt/sources.list; then
+    sed -i "\|$needle|d" /etc/apt/sources.list
+  fi
+}
+
 [[ $EUID -eq 0 ]] || die "this installer must run as root"
 [[ -r /etc/os-release ]] || die "cannot detect the operating system"
 # shellcheck disable=SC1091
@@ -97,6 +110,10 @@ if [[ "$EXPOSE_MONGODB" == true ]]; then
 fi
 export DEBIAN_FRONTEND=noninteractive
 log "Installing base packages"
+# Normalize repositories left by previous Node.js, MongoDB, Docker, or failed installer runs.
+remove_apt_source "deb.nodesource.com/node_"
+remove_apt_source "repo.mongodb.org/apt/ubuntu"
+remove_apt_source "download.docker.com/linux/ubuntu"
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates curl gnupg nginx certbot python3-certbot-nginx ufw fail2ban git rsync jq openssl sudo util-linux
 install -d -m 0755 /etc/apt/keyrings
