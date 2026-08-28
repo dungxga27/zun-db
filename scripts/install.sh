@@ -42,7 +42,8 @@ read_tty() {
 }
 
 ask_value() {
-  local name=$1 prompt=$2 default=${3:-} secret=${4:-false} required=${5:-true} value=${!name:-}
+  local name=$1 prompt=$2 default=${3:-} secret=${4:-false} required=${5:-true} value
+  value=$(printenv "$name" 2>/dev/null || true)
   if [[ -z "$value" && "$NONINTERACTIVE" != true ]]; then
     value=$(read_tty "$prompt" "$default" "$secret")
   fi
@@ -52,7 +53,8 @@ ask_value() {
 }
 
 ask_bool() {
-  local name=$1 prompt=$2 default=$3 value=${!name:-}
+  local name=$1 prompt=$2 default=$3 value
+  value=$(printenv "$name" 2>/dev/null || true)
   if [[ -z "$value" && "$NONINTERACTIVE" != true ]]; then
     value=$(read_tty "$prompt" "$default")
   fi
