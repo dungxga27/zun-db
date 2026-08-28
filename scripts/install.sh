@@ -7,6 +7,7 @@ APP_DIR="$INSTALL_ROOT/app"
 ENV_FILE="$INSTALL_ROOT/.env"
 SERVICE_USER="${SERVICE_USER:-mongodb-platform}"
 NONINTERACTIVE="${NONINTERACTIVE:-false}"
+PLATFORM_REPO_URL="${PLATFORM_REPO_URL:-https://github.com/dungxga27/zun-db.git}"
 
 log() { printf '\n==> %s\n' "$*"; }
 die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
@@ -84,10 +85,6 @@ ask_value BACKUP_RETENTION_DAYS "Backup retention in days [14]: " 14 false
 if [[ "$EXPOSE_MONGODB" == true ]]; then
   [[ -n ${MONGODB_ALLOWED_CIDR:-} ]] || die "MONGODB_ALLOWED_CIDR is required when MongoDB is exposed"
 fi
-if [[ -z "$SOURCE_ROOT" && -z ${PLATFORM_REPO_URL:-} ]]; then
-  die "PLATFORM_REPO_URL is required when installing through curl; it must point to the Git repository"
-fi
-
 export DEBIAN_FRONTEND=noninteractive
 log "Installing base packages"
 apt-get update
@@ -138,7 +135,7 @@ if [[ -n "$SOURCE_ROOT" ]]; then
   fi
 else
   rm -rf "$APP_DIR"
-  git clone --depth 1 "${PLATFORM_REPO_URL}" "$APP_DIR"
+  git clone --depth 1 "$PLATFORM_REPO_URL" "$APP_DIR"
 fi
 chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR"
 
@@ -307,8 +304,11 @@ health_port=80
 [[ "$ENABLE_HTTPS" == true ]] && health_port=443
 for _ in $(seq 1 30); do
   if curl --fail --silent --show-error --resolve "$DOMAIN:$health_port:127.0.0.1" "$health_url" >/dev/null 2>&1; then
-    printf 'Healthy: %s\n' "$health_url"
-    printf 'Installation complete. Sign in as %s.\n' "$ADMIN_EMAIL"
+    printf '\nMongoDB Platform installed successfully.\n'
+    printf 'Dashboard: %s\n' "${SCHEME}://${DOMAIN}"
+    printf 'Health:    %s\n' "$health_url"
+    printf 'Admin:     %s\n' "$ADMIN_EMAIL"
+    printf 'Open the dashboard URL above to sign in.\n'
     exit 0
   fi
   sleep 2

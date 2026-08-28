@@ -37,19 +37,19 @@ sudo bash scripts/install.sh
 
 The installer prompts through `/dev/tty`, including when its script body arrived over a pipe. It installs Node.js 22, pnpm, MongoDB 8 from MongoDB's official Ubuntu repository, Database Tools, Nginx, Certbot, UFW, fail2ban, Docker Engine with Compose, and Git. Docker is installed as requested but the application and MongoDB run natively under systemd.
 
-For a curl installation, replace both placeholders below with an actual raw-file URL and Git repository URL. A GitHub HTML `blob` URL is not a raw script URL. This repository cannot provide a working copy-and-paste curl command until it has a real public raw URL:
+Install directly from the public repository with one command:
 
 ```bash
-curl -fsSL https://raw.example.invalid/OWNER/REPO/REF/scripts/install.sh | \
-  sudo PLATFORM_REPO_URL=https://github.com/OWNER/REPO.git bash
+curl -fsSL https://raw.githubusercontent.com/dungxga27/zun-db/main/scripts/install.sh | sudo bash
 ```
+
+The installer logs each installation stage, asks for the domain and administrator credentials through `/dev/tty`, clones this repository automatically, and prints the dashboard URL when the health check succeeds.
 
 Noninteractive automation supplies all required values as environment variables:
 
 ```bash
 curl -fsSL https://raw.example.invalid/OWNER/REPO/REF/scripts/install.sh | \
   sudo env NONINTERACTIVE=true \
-    PLATFORM_REPO_URL=https://github.com/OWNER/REPO.git \
     DOMAIN=db.example.com \
     ADMIN_EMAIL=admin@example.com \
     ADMIN_PASSWORD='use-a-long-unique-secret' \
