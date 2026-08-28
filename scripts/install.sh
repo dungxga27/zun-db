@@ -66,7 +66,17 @@ ask_bool() {
   esac
 }
 
-ask_value DOMAIN "Domain name (for example db.example.com): "
+ask_value DOMAIN "Domain name (leave blank to use the VPS IP): " "" false false
+if [[ -z "$DOMAIN" ]]; then
+  DOMAIN=$(curl -4fsSL --max-time 10 https://api.ipify.org 2>/dev/null || true)
+  if [[ -z "$DOMAIN" ]]; then
+    DOMAIN=$(hostname -I 2>/dev/null | awk '{ print $1 }')
+  fi
+  [[ -n "$DOMAIN" ]] || die "could not detect the VPS IP; rerun and enter a domain or IP address"
+  printf 'Using VPS IP: %s\n' "$DOMAIN" >/dev/tty
+fi
+DOMAIN_IS_IP=false
+[[ "$DOMAIN" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] && DOMAIN_IS_IP=true
 ask_value ADMIN_EMAIL "Initial admin email: "
 ask_value ADMIN_PASSWORD "Initial admin password (hidden): " "" true
 ask_bool ENABLE_HTTPS "Enable HTTPS with Let's Encrypt? [Y/n]: " Y
@@ -74,10 +84,14 @@ ask_bool EXPOSE_MONGODB "Expose MongoDB port 27017? [y/N]: " N
 ask_bool ENABLE_BACKUPS "Enable automatic daily backups? [Y/n]: " Y
 ask_value BACKUP_RETENTION_DAYS "Backup retention in days [14]: " 14 false
 
-[[ "$DOMAIN" =~ ^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]] || die "DOMAIN is not a valid DNS hostname"
+[[ "$DOMAIN" =~ ^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]] || die "DOMAIN is not a valid DNS hostname or IPv4 address"
 [[ "$ADMIN_EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] || die "ADMIN_EMAIL is invalid"
 (( ${#ADMIN_PASSWORD} >= 8 )) || die "ADMIN_PASSWORD must contain at least 8 characters"
 [[ "$BACKUP_RETENTION_DAYS" =~ ^[1-9][0-9]*$ ]] || die "BACKUP_RETENTION_DAYS must be a positive integer"
+if [[ "$DOMAIN_IS_IP" == true && "$ENABLE_HTTPS" == true ]]; then
+  printf 'HTTPS disabled: Let\x27s Encrypt does not issue certificates for IP addresses.\n' >/dev/tty
+  ENABLE_HTTPS=false
+fi
 if [[ "$EXPOSE_MONGODB" == true ]]; then
   [[ -n ${MONGODB_ALLOWED_CIDR:-} ]] || die "MONGODB_ALLOWED_CIDR is required when MongoDB is exposed"
 fi

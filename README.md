@@ -43,7 +43,7 @@ Install directly from the public repository with one command:
 curl -fsSL https://raw.githubusercontent.com/dungxga27/zun-db/main/scripts/install.sh | sudo bash
 ```
 
-The installer logs each installation stage, asks for the domain and administrator credentials through `/dev/tty`, clones this repository automatically, and prints the dashboard URL when the health check succeeds.
+The installer logs each installation stage, asks for the domain and administrator credentials through `/dev/tty`, clones this repository automatically, and prints the dashboard URL when the health check succeeds. Leave the domain blank to detect the VPS IP automatically; IP-based installs use HTTP because Let's Encrypt does not issue certificates for IP addresses.
 
 Noninteractive automation supplies all required values as environment variables:
 
