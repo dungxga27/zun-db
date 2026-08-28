@@ -18,12 +18,14 @@ remove_apt_source() {
   local needle=$1 file
   for file in /etc/apt/sources.list.d/*; do
     [[ -f "$file" ]] || continue
+    [[ "$file" == *.platform-disabled ]] && continue
     if grep -qF "$needle" "$file"; then
-      rm -f "$file"
+      mv "$file" "${file}.platform-disabled"
     fi
   done
   if [[ -f /etc/apt/sources.list ]] && grep -qF "$needle" /etc/apt/sources.list; then
-    sed -i "\|$needle|d" /etc/apt/sources.list
+    cp /etc/apt/sources.list /etc/apt/sources.list.pre-platform
+    sed -i "\|$needle|s|^|# disabled by mongodb-platform: |" /etc/apt/sources.list
   fi
 }
 
@@ -110,12 +112,19 @@ if [[ "$EXPOSE_MONGODB" == true ]]; then
 fi
 export DEBIAN_FRONTEND=noninteractive
 log "Installing base packages"
-# Normalize repositories left by previous Node.js, MongoDB, Docker, or failed installer runs.
+# Disable a broken legacy NodeSource definition without removing installed Node.js.
 remove_apt_source "deb.nodesource.com/node_"
-remove_apt_source "repo.mongodb.org/apt/ubuntu"
-remove_apt_source "download.docker.com/linux/ubuntu"
 apt-get update
-apt-get install -y --no-install-recommends ca-certificates curl gnupg nginx certbot python3-certbot-nginx ufw fail2ban git rsync jq openssl sudo util-linux
+BASE_PACKAGES=(ca-certificates curl gnupg nginx certbot python3-certbot-nginx ufw fail2ban git rsync jq openssl sudo util-linux)
+MISSING_PACKAGES=()
+for package in "${BASE_PACKAGES[@]}"; do
+  dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'ok installed' || MISSING_PACKAGES+=("$package")
+done
+if (( ${#MISSING_PACKAGES[@]} )); then
+  apt-get install -y --no-install-recommends "${MISSING_PACKAGES[@]}"
+else
+  log "Base packages already installed; reusing them"
+fi
 install -d -m 0755 /etc/apt/keyrings
 if [[ "$EXPOSE_MONGODB" == true ]]; then
   python3 - "$MONGODB_ALLOWED_CIDR" <<'PY' || die "MONGODB_ALLOWED_CIDR must be a valid IPv4 or IPv6 CIDR"
@@ -125,27 +134,47 @@ PY
 fi
 
 log "Installing Node.js 22 and pnpm"
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
-printf 'deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main\n' >/etc/apt/sources.list.d/nodesource.list
-apt-get update
-apt-get install -y nodejs
-corepack enable
-corepack prepare pnpm@10.15.0 --activate
+if command -v node >/dev/null 2>&1 && [[ $(node -p 'process.versions.node.split(".")[0]') -ge 22 ]]; then
+  log "Reusing Node.js $(node --version)"
+else
+  NODE_ARCH=x64
+  [[ "$ARCH" == arm64 ]] && NODE_ARCH=arm64
+  NODE_VERSION=22.22.0
+  curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" -o /tmp/node.tar.xz
+  tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1
+  rm -f /tmp/node.tar.xz
+fi
+if command -v pnpm >/dev/null 2>&1; then
+  log "Reusing pnpm $(pnpm --version)"
+else
+  corepack enable
+  corepack prepare pnpm@10.15.0 --activate
+fi
 PNPM_BIN=$(command -v pnpm)
 [[ "$PNPM_BIN" == /usr/local/bin/pnpm ]] || ln -sf "$PNPM_BIN" /usr/local/bin/pnpm
 
 log "Installing MongoDB 8.0 and Database Tools"
-curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | gpg --dearmor --yes -o /etc/apt/keyrings/mongodb-server-8.0.gpg
-printf 'deb [ arch=%s signed-by=/etc/apt/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu %s/mongodb-org/8.0 multiverse\n' "$ARCH" "$MONGO_CODENAME" >/etc/apt/sources.list.d/mongodb-org-8.0.list
-apt-get update
-apt-get install -y mongodb-org mongodb-database-tools
+if command -v mongod >/dev/null 2>&1 && command -v mongodump >/dev/null 2>&1 && mongod --version | grep -q 'v8\.'; then
+  log "Reusing $(mongod --version | grep -m 1 'db version')"
+else
+  remove_apt_source "repo.mongodb.org/apt/ubuntu"
+  curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | gpg --dearmor --yes -o /etc/apt/keyrings/mongodb-server-8.0.gpg
+  printf 'deb [ arch=%s signed-by=/etc/apt/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu %s/mongodb-org/8.0 multiverse\n' "$ARCH" "$MONGO_CODENAME" >/etc/apt/sources.list.d/mongodb-org-8.0.list
+  apt-get update
+  apt-get install -y mongodb-org mongodb-database-tools
+fi
 
 log "Installing Docker Engine and Compose plugin"
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
-chmod a+r /etc/apt/keyrings/docker.gpg
-printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu %s stable\n' "$ARCH" "$VERSION_CODENAME" >/etc/apt/sources.list.d/docker.list
-apt-get update
-apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+  log "Reusing $(docker --version)"
+else
+  remove_apt_source "download.docker.com/linux/ubuntu"
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
+  chmod a+r /etc/apt/keyrings/docker.gpg
+  printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu %s stable\n' "$ARCH" "$VERSION_CODENAME" >/etc/apt/sources.list.d/docker.list
+  apt-get update
+  apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+fi
 systemctl enable --now docker
 
 log "Acquiring application source"
