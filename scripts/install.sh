@@ -16,11 +16,11 @@ trap 'on_error $LINENO' ERR
 
 remove_apt_source() {
   local needle=$1 file
+  install -d -m 0700 /etc/apt/platform-source-backups
   for file in /etc/apt/sources.list.d/*; do
     [[ -f "$file" ]] || continue
-    [[ "$file" == *.platform-disabled ]] && continue
     if grep -qF "$needle" "$file"; then
-      mv "$file" "${file}.platform-disabled"
+      mv "$file" "/etc/apt/platform-source-backups/$(basename "$file").$(date +%s)"
     fi
   done
   if [[ -f /etc/apt/sources.list ]] && grep -qF "$needle" /etc/apt/sources.list; then
@@ -112,6 +112,12 @@ if [[ "$EXPOSE_MONGODB" == true ]]; then
 fi
 export DEBIAN_FRONTEND=noninteractive
 log "Installing base packages"
+# Move backups created by older installer revisions out of APT's source directory.
+install -d -m 0700 /etc/apt/platform-source-backups
+for old_source in /etc/apt/sources.list.d/*.platform-disabled; do
+  [[ -f "$old_source" ]] || continue
+  mv "$old_source" "/etc/apt/platform-source-backups/$(basename "$old_source").$(date +%s)"
+done
 # Disable a broken legacy NodeSource definition without removing installed Node.js.
 remove_apt_source "deb.nodesource.com/node_"
 apt-get update
@@ -159,7 +165,9 @@ if command -v mongod >/dev/null 2>&1 && command -v mongodump >/dev/null 2>&1 && 
 else
   remove_apt_source "repo.mongodb.org/apt/ubuntu"
   curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | gpg --dearmor --yes -o /etc/apt/keyrings/mongodb-server-8.0.gpg
+  chmod 0644 /etc/apt/keyrings/mongodb-server-8.0.gpg
   printf 'deb [ arch=%s signed-by=/etc/apt/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu %s/mongodb-org/8.0 multiverse\n' "$ARCH" "$MONGO_CODENAME" >/etc/apt/sources.list.d/mongodb-org-8.0.list
+  chmod 0644 /etc/apt/sources.list.d/mongodb-org-8.0.list
   apt-get update
   apt-get install -y mongodb-org mongodb-database-tools
 fi
@@ -172,6 +180,7 @@ else
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
   chmod a+r /etc/apt/keyrings/docker.gpg
   printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu %s stable\n' "$ARCH" "$VERSION_CODENAME" >/etc/apt/sources.list.d/docker.list
+  chmod 0644 /etc/apt/sources.list.d/docker.list
   apt-get update
   apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 fi
