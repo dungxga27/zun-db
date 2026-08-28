@@ -27,12 +27,6 @@ esac
 ARCH=$(dpkg --print-architecture)
 [[ "$ARCH" == amd64 || "$ARCH" == arm64 ]] || die "unsupported architecture: $ARCH"
 
-SCRIPT_PATH="${BASH_SOURCE[0]-}"
-SOURCE_ROOT=""
-if [[ -n "$SCRIPT_PATH" && -f "$(dirname "$SCRIPT_PATH")/../package.json" ]]; then
-  SOURCE_ROOT=$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd -P)
-fi
-
 read_tty() {
   local prompt=$1 default=${2:-} secret=${3:-false} value
   [[ -r /dev/tty && -w /dev/tty ]] || die "interactive input needs /dev/tty; set NONINTERACTIVE=true and provide environment values"
@@ -126,17 +120,8 @@ if ! id "$SERVICE_USER" >/dev/null 2>&1; then
   useradd --system --home-dir "$INSTALL_ROOT" --shell /usr/sbin/nologin "$SERVICE_USER"
 fi
 install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_USER" "$INSTALL_ROOT" "$APP_DIR"
-if [[ -n "$SOURCE_ROOT" ]]; then
-  if [[ "$SOURCE_ROOT" != "$APP_DIR" ]]; then
-    rsync -a --delete \
-      --exclude '.git' --exclude 'node_modules' --exclude 'apps/*/node_modules' \
-      --exclude 'apps/*/.next' --exclude 'apps/*/dist' --exclude '.env' \
-      "$SOURCE_ROOT/" "$APP_DIR/"
-  fi
-else
-  rm -rf "$APP_DIR"
-  git clone --depth 1 "$PLATFORM_REPO_URL" "$APP_DIR"
-fi
+rm -rf "$APP_DIR"
+git clone --depth 1 "$PLATFORM_REPO_URL" "$APP_DIR"
 chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR"
 
 MONGO_ROOT_USERNAME=platform_admin
