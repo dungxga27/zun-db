@@ -65,6 +65,7 @@ mv "$RELEASE_DIR" "$APP_DIR"
 RELEASE_DIR=""
 DEPLOYED=true
 install -m 0755 "$APP_DIR/scripts/update.sh" /usr/local/sbin/mongodb-platform-update
+install -m 0755 "$APP_DIR/scripts/configure-mongodb-access.sh" /usr/local/sbin/mongodb-platform-configure-access
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-api.service" /etc/systemd/system/mongodb-platform-api.service
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-web.service" /etc/systemd/system/mongodb-platform-web.service
 NODE_BIN=$(command -v node)

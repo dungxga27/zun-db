@@ -291,8 +291,9 @@ chmod 0600 "$ENV_FILE"
 log "Installing dependencies and building applications"
 runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api pnpm install --no-frozen-lockfile' bash "$APP_DIR" "$INSTALL_ROOT"
 runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api NODE_OPTIONS=--max-old-space-size=1536 pnpm build' bash "$APP_DIR" "$INSTALL_ROOT"
-chmod 0750 "$APP_DIR/scripts/backup.sh" "$APP_DIR/scripts/restore.sh" "$APP_DIR/scripts/update.sh"
+chmod 0750 "$APP_DIR/scripts/backup.sh" "$APP_DIR/scripts/restore.sh" "$APP_DIR/scripts/update.sh" "$APP_DIR/scripts/configure-mongodb-access.sh"
 install -m 0755 "$APP_DIR/scripts/update.sh" /usr/local/sbin/mongodb-platform-update
+install -m 0755 "$APP_DIR/scripts/configure-mongodb-access.sh" /usr/local/sbin/mongodb-platform-configure-access
 
 log "Installing native services"
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-api.service" /etc/systemd/system/mongodb-platform-api.service
