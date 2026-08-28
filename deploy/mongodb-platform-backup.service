@@ -1,0 +1,11 @@
+[Unit]
+Description=MongoDB Platform backup
+After=mongod.service
+Requires=mongod.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/mongodb-platform/app/scripts/backup.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

@@ -1,0 +1,26 @@
+[Unit]
+Description=MongoDB Platform API
+After=network-online.target mongod.service
+Wants=network-online.target
+Requires=mongod.service
+
+[Service]
+Type=simple
+User=mongodb-platform
+Group=mongodb-platform
+WorkingDirectory=/opt/mongodb-platform/app/apps/api
+EnvironmentFile=/opt/mongodb-platform/.env
+Environment=NODE_ENV=production
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/node dist/main.js
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/backups/mongodb-platform
+MemoryMax=768M
+
+[Install]
+WantedBy=multi-user.target

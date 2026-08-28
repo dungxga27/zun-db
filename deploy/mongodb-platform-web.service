@@ -1,0 +1,26 @@
+[Unit]
+Description=MongoDB Platform Web
+After=network-online.target mongodb-platform-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mongodb-platform
+Group=mongodb-platform
+WorkingDirectory=/opt/mongodb-platform/app/apps/web
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/local/bin/pnpm start
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+MemoryMax=1024M
+
+[Install]
+WantedBy=multi-user.target

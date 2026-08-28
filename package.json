@@ -1,0 +1,12 @@
+{
+  "name": "mongodb-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --parallel --filter @zun-db/api --filter @zun-db/web dev",
+    "lint": "pnpm --filter @zun-db/web lint",
+    "typecheck": "pnpm --filter @zun-db/shared typecheck && pnpm --filter @zun-db/api typecheck"
+  }
+}
