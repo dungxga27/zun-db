@@ -286,6 +286,10 @@ chmod 0750 "$APP_DIR/scripts/backup.sh" "$APP_DIR/scripts/restore.sh"
 log "Installing native services"
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-api.service" /etc/systemd/system/mongodb-platform-api.service
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-web.service" /etc/systemd/system/mongodb-platform-web.service
+NODE_BIN=$(command -v node)
+PNPM_BIN=$(command -v pnpm)
+sed -i "s|^ExecStart=.*node dist/main.js$|ExecStart=${NODE_BIN} dist/main.js|" /etc/systemd/system/mongodb-platform-api.service
+sed -i "s|^ExecStart=.*pnpm start$|ExecStart=${PNPM_BIN} start|" /etc/systemd/system/mongodb-platform-web.service
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-backup.service" /etc/systemd/system/mongodb-platform-backup.service
 install -m 0644 "$APP_DIR/deploy/mongodb-platform-backup.timer" /etc/systemd/system/mongodb-platform-backup.timer
 cat >/etc/sudoers.d/mongodb-platform <<EOF
