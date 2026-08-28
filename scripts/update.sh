@@ -52,7 +52,7 @@ COMMIT=$(git -C "$RELEASE_DIR" rev-parse --short HEAD)
 chown -R "$SERVICE_USER:$SERVICE_USER" "$RELEASE_DIR"
 
 write_status running "Installing dependencies"
-runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api pnpm install --frozen-lockfile' bash "$RELEASE_DIR" "$INSTALL_ROOT"
+runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api pnpm install --no-frozen-lockfile' bash "$RELEASE_DIR" "$INSTALL_ROOT"
 
 write_status running "Building API and web"
 runuser -u "$SERVICE_USER" -- bash -c 'cd "$1" && HOME="$2" NEXT_PUBLIC_API_BASE_URL=/api NODE_OPTIONS=--max-old-space-size=1536 pnpm build' bash "$RELEASE_DIR" "$INSTALL_ROOT"
