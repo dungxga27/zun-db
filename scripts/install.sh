@@ -363,7 +363,12 @@ health_url="${SCHEME}://${DOMAIN}/api/health"
 health_port=80
 [[ "$ENABLE_HTTPS" == true ]] && health_port=443
 for _ in $(seq 1 30); do
-  if curl --fail --silent --show-error --resolve "$DOMAIN:$health_port:127.0.0.1" "$health_url" >/dev/null 2>&1; then
+  if [[ "$ENABLE_HTTPS" == true ]]; then
+    health_ok=$(curl --fail --silent --show-error --resolve "$DOMAIN:$health_port:127.0.0.1" "$health_url" 2>/dev/null || true)
+  else
+    health_ok=$(curl --fail --silent --show-error --header "Host: $DOMAIN" http://127.0.0.1/api/health 2>/dev/null || true)
+  fi
+  if [[ -n "$health_ok" ]]; then
     printf '\nMongoDB Platform installed successfully.\n'
     printf 'Dashboard: %s\n' "${SCHEME}://${DOMAIN}"
     printf 'Health:    %s\n' "$health_url"
