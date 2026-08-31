@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; font-family: var(--font-quicksand), sans-serif; }
 body { min-width: 320px; }
@@ -42,6 +44,7 @@ body { min-width: 320px; }
 .metric-card .ant-statistic-title { margin-bottom: 10px; }
 .chart-card { min-height: 360px; }
 .dashboard-hero { overflow: hidden; color: white; background: radial-gradient(circle at 80% -40%, rgba(96,165,250,.55), transparent 38%), linear-gradient(115deg, #0d3673, #155eef 58%, #2376e5); box-shadow: 0 14px 34px rgba(21,94,239,.16); }
+.dashboard-hero::after { content: ""; position: absolute; right: -80px; bottom: -160px; width: 360px; height: 360px; border: 1px solid rgba(255,255,255,.1); border-radius: 50%; box-shadow: 0 0 0 45px rgba(255,255,255,.035), 0 0 0 90px rgba(255,255,255,.025); }
 .dashboard-hero .ant-card-body { padding: 24px 28px; }
 .dashboard-hero .ant-typography, .dashboard-hero .ant-statistic-title, .dashboard-hero .ant-statistic-content { color: white; margin: 0; }
 .dashboard-hero .ant-statistic-title { color: #bfdbfe; font-size: 11px; }
@@ -89,6 +92,12 @@ body { min-width: 320px; }
 .mongo-descriptions .ant-descriptions-item-label { width: 190px; }
 .mongo-json-editor { font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important; font-size: 13px; line-height: 1.65; tab-size: 2; }
 .update-log { min-height: 180px; max-height: 420px; margin: 0; padding: 16px; overflow: auto; border-radius: 10px; color: #cbd5e1; background: #07111f; font: 12px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.release-card, .settings-panel { border: 1px solid rgba(128,128,128,.11) !important; box-shadow: 0 5px 20px rgba(15,23,42,.035); }
+.release-card { overflow: hidden; background: linear-gradient(125deg, rgba(22,119,255,.08), transparent 45%); }
+.release-card-update { border-color: rgba(245,158,11,.3) !important; background: linear-gradient(125deg, rgba(245,158,11,.1), transparent 48%); }
+.release-icon { width: 52px; height: 52px; display: grid; flex: 0 0 52px; place-items: center; border-radius: 15px; color: #fff; background: linear-gradient(135deg, #111827, #334155); box-shadow: 0 10px 25px rgba(15,23,42,.18); font-size: 24px; }
+.release-card h3 { margin: 0 !important; }
+.settings-panel { height: 100%; }
 @media (max-width: 767px) {
   .workspace-loading-sider { display: none; }
   .workspace-loading-main { padding: 20px 16px; }

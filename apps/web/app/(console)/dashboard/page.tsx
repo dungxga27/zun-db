@@ -2,7 +2,7 @@
 
 import { PageHeading, QueryState } from "@/components/page";
 import { api, Project } from "@/lib/api";
-import { AreaChartOutlined, ArrowRightOutlined, CheckCircleFilled, CloudServerOutlined, DatabaseOutlined, HddOutlined, ProjectOutlined, ReloadOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import { AreaChartOutlined, ArrowRightOutlined, CheckCircleFilled, CloudServerOutlined, DatabaseOutlined, HddOutlined, ProjectOutlined, ReloadOutlined, SafetyCertificateOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { Column } from "@ant-design/charts";
 import { useQuery } from "@tanstack/react-query";
 import { Badge, Button, Card, Col, Flex, Progress, Row, Space, Statistic, Table, Tag, Tooltip, Typography } from "antd";
@@ -46,19 +46,20 @@ export default function DashboardPage() {
       const operationData = Object.entries(overview.mongodb.opcounters).filter(([, value]) => typeof value === "number").map(([operation, value]) => ({ operation: operation.charAt(0).toUpperCase() + operation.slice(1), value }));
       const uptimeDays = Math.floor(overview.mongodb.uptimeSeconds / 86400);
 
-      return <Space direction="vertical" size={18} style={{ width: "100%" }}>
+      return <div className="flex w-full flex-col gap-4 lg:gap-5">
         <Card className="dashboard-hero" bordered={false}>
-          <Flex justify="space-between" align="center" gap={24} wrap="wrap">
-            <Space size="large">
+          <div className="relative z-10 flex flex-col justify-between gap-7 xl:flex-row xl:items-center">
+            <Space size="large" align="start">
               <span className="dashboard-hero-icon"><CloudServerOutlined /></span>
-              <div><Space size="small"><Typography.Title level={3}>MongoDB is operational</Typography.Title><Tag color="success" bordered={false}>HEALTHY</Tag></Space><Typography.Text>MongoDB {overview.mongodb.version} running for {uptimeDays ? `${uptimeDays} days` : `${Math.floor(overview.mongodb.uptimeSeconds / 3600)} hours`}</Typography.Text></div>
+              <div><div className="mb-1 flex flex-wrap items-center gap-2"><Typography.Title level={3}>MongoDB is operational</Typography.Title><Tag className="m-0" color="success" bordered={false}>HEALTHY</Tag></div><Typography.Text>MongoDB {overview.mongodb.version} running for {uptimeDays ? `${uptimeDays} days` : `${Math.floor(overview.mongodb.uptimeSeconds / 3600)} hours`}</Typography.Text></div>
             </Space>
-            <Space size="large" split={<span className="hero-divider" />}>
+            <div className="grid grid-cols-2 items-center gap-5 sm:flex sm:flex-wrap">
               <Statistic title="Active connections" value={overview.mongodb.connections.current} />
+              <span className="hero-divider hidden sm:inline-block" />
               <Statistic title="Capacity available" value={compact.format(overview.mongodb.connections.available)} />
-              <Link href="/mongodb"><Button type="primary">Manage MongoDB <ArrowRightOutlined /></Button></Link>
-            </Space>
-          </Flex>
+              <Link className="col-span-2 sm:col-auto" href="/mongodb"><Button className="w-full" type="primary">Manage MongoDB <ArrowRightOutlined /></Button></Link>
+            </div>
+          </div>
         </Card>
 
         <Row gutter={[16, 16]}>
@@ -70,7 +71,7 @@ export default function DashboardPage() {
 
         <Row gutter={[16, 16]}>
           <Col xs={24} xl={15}>
-            <Card className="dashboard-panel dashboard-chart" bordered={false} title={<Space><AreaChartOutlined /> MongoDB operations</Space>} extra={<Typography.Text type="secondary">Since server start</Typography.Text>}>
+            <Card className="dashboard-panel dashboard-chart" bordered={false} title={<Space><AreaChartOutlined /> MongoDB operations</Space>} extra={<Tag bordered={false} icon={<ThunderboltOutlined />}>Live counters</Tag>}>
               {operationData.length ? <Column height={292} data={operationData} xField="operation" yField="value" colorField="operation" legend={false} style={{ radiusTopLeft: 6, radiusTopRight: 6 }} axis={{ y: { labelFormatter: (value: number) => compact.format(value) } }} tooltip={{ title: "operation" }} /> : null}
             </Card>
           </Col>
@@ -85,8 +86,8 @@ export default function DashboardPage() {
           </Col>
         </Row>
 
-        <Card className="dashboard-panel" bordered={false} title="Managed databases" extra={<Link href="/projects"><Button type="link">View all <ArrowRightOutlined /></Button></Link>}>
-          <Table rowKey="_id" pagination={false} dataSource={projects.slice(0, 6)} locale={{ emptyText: "Create your first project to provision a database" }} columns={[
+        <Card className="dashboard-panel" bordered={false} title={<div><span>Managed databases</span><Typography.Text className="block text-xs font-normal" type="secondary">Recently provisioned environments</Typography.Text></div>} extra={<Link href="/projects"><Button type="link">View all <ArrowRightOutlined /></Button></Link>}>
+          <Table scroll={{ x: 760 }} rowKey="_id" pagination={false} dataSource={projects.slice(0, 6)} locale={{ emptyText: "Create your first project to provision a database" }} columns={[
             { title: "PROJECT", dataIndex: "name", render: (value, row) => <Space><span className="database-avatar"><DatabaseOutlined /></span><div className="table-primary"><Link href={`/projects/${row._id}`}>{value}</Link><Typography.Text type="secondary">{row.description || "Managed MongoDB project"}</Typography.Text></div></Space> },
             { title: "DATABASE", dataIndex: "databaseName", render: (value, row) => <Link href={`/databases/${row._id}`}><Typography.Text code>{value}</Typography.Text></Link> },
             { title: "USER", dataIndex: "username", render: (value) => <Typography.Text code>{value}</Typography.Text> },
@@ -94,7 +95,7 @@ export default function DashboardPage() {
             { title: "CREATED", dataIndex: "createdAt", render: (value) => <Tooltip title={new Date(value).toLocaleString()}>{new Date(value).toLocaleDateString()}</Tooltip> },
           ]} />
         </Card>
-      </Space>;
+      </div>;
     })()}</QueryState>
   </>;
 }
