@@ -15,6 +15,14 @@ DEPLOYED=false
 
 [[ $EUID -eq 0 ]] || { printf 'Run this updater as root.\n' >&2; exit 1; }
 command -v flock >/dev/null || { printf 'flock is required.\n' >&2; exit 1; }
+
+# API-triggered updates inherit the API service cgroup and would be killed when
+# that service stops. Move the updater into its own transient unit first.
+if [[ ${PLATFORM_UPDATE_DETACHED:-0} != 1 && -n ${INVOCATION_ID:-} ]]; then
+  exec systemd-run --unit=mongodb-platform-update --collect --property=Type=exec \
+    --setenv=PLATFORM_UPDATE_DETACHED=1 /usr/local/sbin/mongodb-platform-update
+fi
+
 exec 9>"$LOCK_FILE"
 flock -n 9 || { printf 'An update is already running.\n' >&2; exit 1; }
 touch "$LOG_FILE"
@@ -26,7 +34,11 @@ write_status() {
   chmod 0644 "$STATUS_FILE"
 }
 
-cleanup() { [[ -z "$RELEASE_DIR" ]] || rm -rf "$RELEASE_DIR"; }
+cleanup() {
+  if [[ -n "$RELEASE_DIR" ]]; then
+    rm -rf "$RELEASE_DIR"
+  fi
+}
 failed() {
   local line=$1
   if [[ "$DEPLOYED" == true && -d "$PREVIOUS_DIR" ]]; then
