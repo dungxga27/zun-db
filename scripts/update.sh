@@ -17,9 +17,10 @@ DEPLOYED=false
 command -v flock >/dev/null || { printf 'flock is required.\n' >&2; exit 1; }
 
 # API-triggered updates inherit the API service cgroup and would be killed when
-# that service stops. Move the updater into its own transient unit first.
-if [[ ${PLATFORM_UPDATE_DETACHED:-0} != 1 && -n ${INVOCATION_ID:-} ]]; then
-  exec systemd-run --unit=mongodb-platform-update --collect --property=Type=exec \
+# that service stops. Always move the first invocation into a transient unit;
+# sudo intentionally strips systemd's INVOCATION_ID from its environment.
+if [[ ${PLATFORM_UPDATE_DETACHED:-0} != 1 ]]; then
+  exec systemd-run --unit=mongodb-platform-update --collect --no-block --property=Type=exec \
     --setenv=PLATFORM_UPDATE_DETACHED=1 /usr/local/sbin/mongodb-platform-update
 fi
 
@@ -36,7 +37,7 @@ write_status() {
 
 cleanup() {
   if [[ -n "$RELEASE_DIR" ]]; then
-    rm -rf "$RELEASE_DIR"
+    rm -rf "$RELEASE_DIR" || true
   fi
 }
 failed() {
